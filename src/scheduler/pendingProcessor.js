@@ -2,6 +2,9 @@ import cron from "node-cron";
 import { getDB } from "../config/dbConnection.js";
 import { exec } from "child_process";
 import path from "path";
+import fs from "fs";
+import axios from "axios";
+import FormData from "form-data";
 
 const PHOTOGRAMMETRY_BIN = "/Users/swapac/Downloads/CreatingAPhotogrammetryCommandLineApp/HelloPhotogrammetry 2025-08-12 15-54-51/Products/usr/local/bin/HelloPhotogrammetry";
 
@@ -22,7 +25,7 @@ export const startPendingProcessor = () => {
         return;
       }
 
-      const folderPath = record.folderPath; 
+      const folderPath = record.folderPath;
       const envFolder = path.dirname(folderPath);
       const usdzPath = path.join(envFolder, `${record.envId}.usdz`);
       const glbPath = path.join(envFolder, `${record.envId}.glb`);
@@ -57,19 +60,39 @@ export const startPendingProcessor = () => {
 
           console.log(" GLB conversion success");
 
-          await pendingCollection.updateOne(
-            { _id: record._id },
-            {
-              $set: {
-                status: "COMPLETED",
-                usdzPath,
-                glbPath,
-                completedAt: new Date(),
-              },
-            }
-          );
+          try {
+            const formData = new FormData();
+            formData.append("file", fs.createReadStream(glbPath));
+            formData.append("scanName", record.scanName || "defaultScan");
+            formData.append("environmentId", record.envId);
 
-          console.log(`envId=${record.envId} processing complete`);
+            await axios.post(
+              "https://mystical-backend.onrender.com/api/scans",
+              formData,
+              { headers: formData.getHeaders() }
+            );
+
+            await pendingCollection.updateOne(
+              { _id: record._id },
+              {
+                $set: {
+                  status: "COMPLETED",
+                  usdzPath,
+                  glbPath,
+                  scanName: record.scanName || "defaultScan",
+                  completedAt: new Date(),
+                },
+              }
+            );
+
+            console.log(`envId=${record.envId} processing complete`);
+          } catch (apiErr) {
+            console.error(" API upload error:", apiErr.message);
+            await pendingCollection.updateOne(
+              { _id: record._id },
+              { $set: { status: "FAILED", error: apiErr.message } }
+            );
+          }
         });
       });
     } catch (error) {
