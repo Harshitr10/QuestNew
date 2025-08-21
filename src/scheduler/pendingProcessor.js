@@ -6,7 +6,7 @@ import path from "path";
 const PHOTOGRAMMETRY_BIN = "/Users/swapac/Downloads/CreatingAPhotogrammetryCommandLineApp/HelloPhotogrammetry 2025-08-12 15-54-51/Products/usr/local/bin/HelloPhotogrammetry";
 
 export const startPendingProcessor = () => {
-  cron.schedule("*/1 * * * *", async () => {
+  cron.schedule("*/20 * * * *", async () => {
     console.log("⏳ Scheduler triggered...");
     const db = getDB();
     const pendingCollection = db.collection("pending");
