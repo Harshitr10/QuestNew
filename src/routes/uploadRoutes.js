@@ -3,6 +3,7 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { uploadImages } from "../controllers/uploadController.js";
+import { getStatus } from "../controllers/statusController.js";
 
 const router = express.Router();
 
@@ -27,4 +28,5 @@ const upload = multer({ storage });
 
 router.post("/upload", upload.array("images"), uploadImages);
 
+router.get("/status", getStatus);
 export default router;
