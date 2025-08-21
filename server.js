@@ -2,6 +2,7 @@ import express from "express";
 import { connectDB } from "./src/config/dbConnection.js";
 import uploadRoutes from "./src/routes/uploadRoutes.js";
 import dotenv from "dotenv";
+import { startPendingProcessor } from "./src/scheduler/pendingProcessor.js";
 
 dotenv.config();
 const app = express();
@@ -16,5 +17,7 @@ const startServer = async () => {
     console.log(`Server running on port ${PORT}`);
   });
 };
+startPendingProcessor();
+
 
 startServer();
